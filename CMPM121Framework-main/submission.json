@@ -1,0 +1,17 @@
+{
+	"team": [
+		  { "firstname": "Calvin",
+		    "lastname": "Richards",
+		    "github": "CalviRichi",
+		    "email": "carricha@ucsc.edu"
+		  },
+
+		  { "firstname": "Claire",
+		    "lastname": "Buck",
+		    "github": "morningbeanss",
+		    "email": "cmbuck@ucsc.edu"
+		  }
+		],
+	"repository": "git@github.com/morningbeanss/121-assignment-2",
+	"commit": ""
+}
