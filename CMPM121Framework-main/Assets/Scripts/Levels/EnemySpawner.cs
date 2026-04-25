@@ -14,6 +14,9 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemy;
     public SpawnPoint[] SpawnPoints;    
 
+    private List<Enemy> enemies;
+    private RPNEvaluator.RPNEvaluator RPN; // used to deduce spawn info
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -30,6 +33,10 @@ public class EnemySpawner : MonoBehaviour
     }
 
     public void StartLevel(string levelname)
+    /*
+    Note to self, level here means level of difficulty!!!
+    Here we need to use $levelname to pass the relevent data to SpawnWave()
+    */
     {
         level_selector.gameObject.SetActive(false);
         // this is not nice: we should not have to be required to tell the player directly that the level is starting
@@ -63,6 +70,10 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator SpawnZombie()
     {
+        /*
+        random, random red, random green, and random bone are 
+        all spawn point types
+        */
         SpawnPoint spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)];
         Vector2 offset = Random.insideUnitCircle * 1.8f;
                 
