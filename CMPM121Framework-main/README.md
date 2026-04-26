@@ -73,3 +73,6 @@ When the player dies or beats all the waves (unless in endless), restart the gam
 We must define AT LEAST one new enemy type. 
 
 I have created submission.json (no commit yet), I have not yet created report.pdf
+
+**Edit:
+Doing a small change to this readme to test edit from a different device
