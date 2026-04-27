@@ -144,17 +144,45 @@ public class EnemySpawner : MonoBehaviour
         EnemyController en = new_enemy.GetComponent<EnemyController>();
         
         
-        
+         
         
         // *** WE DO TOUCH THIS *** //
+        
         dict["base"] = enemy_data.hp;
-        en.hp = new Hittable(50, Hittable.Team.MONSTERS, new_enemy); // change to RPN evaluation
+        if (string.IsNullOrEmpty(spawn.hp)) {
+			// EnemyController.hp is a "Hittable", not a simple int	
+			en.hp = new Hittable(enemy_data.hp, Hittable.Team.MONSTERS, new_enemy);
+		}
+		else {
+			int hp_value = RPN.Evaluate(spawn.hp, dict);
+			en.hp = new Hittable(hp_value, Hittable.Team.MONSTERS, new_enemy);	
+		}
         
         dict["base"] = enemy_data.damage;
-        en.damage = enemy_data.damage; // change to RPN evaluation
+       	if (string.ISNullOrEmpty(spawn.damage)) {
+			// damage inside of enemy controller is currently a float
+			en.damage = enemy_data.damage;
+		} 
+		else {
+			en.damage = RPN.Evaluatef(spawn.damage, dict);
+		}
 
-        en.speed = enemy_data.speed;
+		dict["base"] = enemy_data.speed;
+		if (string.IsNullOrEmpty(spawn.speed)) {
+			// speed inside of enemy controller is an int
+			en.speed = enemy_data.speed;
+		}
+		else {
+			en.speed = RPN.Evaluate(spawn.speed, dict);
+		}
+
         GameManager.Instance.AddEnemy(new_enemy);
         yield return new WaitForSeconds(0.5f); // change this to work with the delay
     }
+
+	IEnumerator SpawnEnemies() {
+	
+		// "spawns all enemies of one type" - Markus Eger via Discord
+
+	}
 }
