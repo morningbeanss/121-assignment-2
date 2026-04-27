@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
+using RPNEvaluator;
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -18,9 +19,9 @@ public class EnemySpawner : MonoBehaviour
     private Level level;
     private int wave = 0;
     private List<Enemy> enemies;
-    private Dictionary<string, int> dict;
+    private Dictionary<string, int> dict = new Dictionary<string, int>();
     
-    private RPNEvaluator.RPNEvaluator RPN; // used to deduce spawn info
+    //private RPNEvaluator.RPNEvaluator RPN; // dis doesn't work w the way my (claire) RPNevaluator is set up
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -154,17 +155,20 @@ public class EnemySpawner : MonoBehaviour
 			en.hp = new Hittable(enemy_data.hp, Hittable.Team.MONSTERS, new_enemy);
 		}
 		else {
-			int hp_value = RPN.Evaluate(spawn.hp, dict);
+            //ik the line below is long to call RPNEvaluator, but idk, thats the only way ik how to make it work
+			int hp_value = RPNEvaluator.RPNEvaluator.Evaluate(spawn.hp, dict);
 			en.hp = new Hittable(hp_value, Hittable.Team.MONSTERS, new_enemy);	
 		}
         
         dict["base"] = enemy_data.damage;
-       	if (string.ISNullOrEmpty(spawn.damage)) {
+       	if (string.IsNullOrEmpty(spawn.damage)) {
 			// damage inside of enemy controller is currently a float
 			en.damage = enemy_data.damage;
 		} 
 		else {
-			en.damage = RPN.Evaluatef(spawn.damage, dict);
+            //the line below, it was an Evaluatef line, but that had errors
+            //!! might need to be changed back idk !!!
+			en.damage = RPNEvaluator.RPNEvaluator.Evaluate(spawn.damage, dict);
 		}
 
 		dict["base"] = enemy_data.speed;
@@ -173,7 +177,7 @@ public class EnemySpawner : MonoBehaviour
 			en.speed = enemy_data.speed;
 		}
 		else {
-			en.speed = RPN.Evaluate(spawn.speed, dict);
+			en.speed = RPNEvaluator.RPNEvaluator.Evaluate(spawn.speed, dict);
 		}
 
         GameManager.Instance.AddEnemy(new_enemy);
@@ -181,8 +185,8 @@ public class EnemySpawner : MonoBehaviour
     }
 
 	IEnumerator SpawnEnemies() {
-	
-		// "spawns all enemies of one type" - Markus Eger via Discord
 
+        // "spawns all enemies of one type" - Markus Eger via Discord
+        return null;
 	}
 }
