@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 public class Spawn
 {
-    public string name;
+    public string enemy;
     public string count;	//  Always an RPN Value
     public string hp;		//	RPN Value or BASE
 	public string damage;	//  RPN Value or BASE

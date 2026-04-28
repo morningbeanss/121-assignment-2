@@ -14,7 +14,7 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         target = GameManager.Instance.player.transform;
-        hp.OnDeath += Die;
+        hp.OnDeath += Die; // flagged for error
         healthui.SetHealth(hp);
     }
 

@@ -38,6 +38,7 @@ public class EnemySpawner : MonoBehaviour
         //adding buttons
         string level_json = Resources.Load<TextAsset>("levels").text; //read json file
         levels = JsonConvert.DeserializeObject<List<Level>>(level_json);
+
         int padding = 60; //space between each level button
         int startLoc = 60; //first button loc
         //list to hold all the button variables (so they can easily be set to inactive after level start)
@@ -54,6 +55,7 @@ public class EnemySpawner : MonoBehaviour
 
             //set up location for next button
             startLoc -= padding;
+
         }
 
         
@@ -77,9 +79,16 @@ public class EnemySpawner : MonoBehaviour
     */
     {
 
-        string level_json = Resources.Load<TextAsset>("levels").text; // added by calvin
-        level = JsonConvert.DeserializeObject<List<Level>>(level_json).Find(l => l.name == levelname); // added by calvin
-
+        //string level_json = Resources.Load<TextAsset>("levels").text; // added by calvin
+        //level = JsonConvert.DeserializeObject<List<Level>>(level_json).Find(l => l.name == levelname); // added by calvin
+        foreach (Level l in levels)
+        {
+            if (l.name == levelname)
+            {
+                level = l;
+            }
+        }
+        //Debug.Log("Level: " + level);
         level_selector.gameObject.SetActive(false);
         // this is not nice: we should not have to be required to tell the player directly that the level is starting
         GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
@@ -123,6 +132,7 @@ public class EnemySpawner : MonoBehaviour
         // default delay is 2
         foreach (Spawn s in level.spawns)
         {
+            //Debug.Log("Spawn name: " + s.enemy);
             yield return SpawnEnemy(s); // make more specific later
         }
 
@@ -153,7 +163,15 @@ public class EnemySpawner : MonoBehaviour
     IEnumerator SpawnEnemy(Spawn spawn) // changed from SpawnZombie()
     {
         
-        Enemy enemy_data = enemies.Find(e => e.name == spawn.name);
+        //Enemy enemy_data = enemies.Find(e => e.name == spawn.name);
+        Enemy enemy_data = null;
+        foreach (Enemy e in enemies)
+        {
+            if (e.name == spawn.enemy)
+            {
+                enemy_data = e;
+            }
+        }
         //Debug.Log("enemy data: " + enemy_data); 
 
         // parse spawn.location string
@@ -168,7 +186,8 @@ public class EnemySpawner : MonoBehaviour
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
 
-        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(enemy_data.sprite); // * I did touch this
+        ////Debug.Log("enemy sprite#: " + enemy_data.sprite);
+        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(0); // flagged for error
         
         EnemyController en = new_enemy.GetComponent<EnemyController>();
         
@@ -190,7 +209,7 @@ public class EnemySpawner : MonoBehaviour
         
         dict["base"] = enemy_data.damage;
        	if (string.IsNullOrEmpty(spawn.damage)) {
-			// damage inside of enemy controller is currently a float
+			
 			en.damage = enemy_data.damage;
 		} 
 		else {
