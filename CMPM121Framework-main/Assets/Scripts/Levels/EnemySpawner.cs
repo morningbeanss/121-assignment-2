@@ -22,8 +22,8 @@ public class EnemySpawner : MonoBehaviour
     private int wave = 0;
     private List<Enemy> enemies;
     private Dictionary<string, int> dict = new Dictionary<string, int>();
-    
-    //private RPNEvaluator.RPNEvaluator RPN; // dis doesn't work w the way my (claire) RPNevaluator is set up
+
+    int activeSpawns;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -116,32 +116,31 @@ public class EnemySpawner : MonoBehaviour
         GameManager.Instance.state = GameManager.GameState.INWAVE;
 
 
-
-
-
         // *** OUR CODE GOES HERE *** //
 
         dict["wave"] = wave; // IMPORTANT
 
-        List<int> sequence_points = new List<int>(level.spawns.Count);
-        foreach (int i in sequence_points)
-        {
-            sequence_points[i] = 0;
-        }
+        activeSpawns = level.spawns.Count; // number of spawning events that are occuring
+        
         // default sequence is [1]
         // default delay is 2
+
+
         foreach (Spawn s in level.spawns)
         {
-            //Debug.Log("Spawn name: " + s.enemy);
-            yield return SpawnEnemy(s); // make more specific later
+            Debug.Log("Spawn name: " + s.enemy +
+            "\nSpawn count");
+            /*
+            Without having written the real behavior, this currently
+            Spawns one zombie, one skeleton, and one warlock
+            */
+            StartCoroutine(SpawnEnemies(s)); // make more specific later
         }
-
-
-
 
 
         // *** WAVE CHANGE LOGIC *** //
-
+        // Track the number of spawn coroutines,
+        // so it will be yield return new WaitUntil(() => activeSpawns == 0 && GameManager.Instance.enemy_count == 0);
         yield return new WaitWhile(() => GameManager.Instance.enemy_count > 0); 
 
         GameManager.Instance.state = GameManager.GameState.WAVEEND;
@@ -160,28 +159,33 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnEnemy(Spawn spawn) // changed from SpawnZombie()
+    void SpawnEnemy(Spawn spawn) // changed from SpawnZombie()
     {
         
-        //Enemy enemy_data = enemies.Find(e => e.name == spawn.name);
-        Enemy enemy_data = null;
-        foreach (Enemy e in enemies)
-        {
-            if (e.name == spawn.enemy)
-            {
-                enemy_data = e;
-            }
-        }
+        Enemy enemy_data = enemies.Find(e => e.name == spawn.enemy); // this should probably work now
+        
         //Debug.Log("enemy data: " + enemy_data); 
 
         // parse spawn.location string
         SpawnPoint spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)]; 
+        string spawn_location = spawn.location.Split(' ')[1];
+        switch (spawn_location)
+        {
+            case "red":
+                spawn_point.kind = SpawnPoint.SpawnName.RED;
+            break;
+            case "bone":
+                spawn_point.kind = SpawnPoint.SpawnName.BONE;
+            break;
+            case "green":
+                spawn_point.kind = SpawnPoint.SpawnName.GREEN;
+            break;
+            default:
+            break;
+        }
         // spawn_point.kind = SpawnName.RED/GREEN/BONE
         Vector2 offset = Random.insideUnitCircle * 1.8f;
 
-        
-        
-        
         // *** WE DON'T TOUCH *** // 
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
@@ -191,8 +195,6 @@ public class EnemySpawner : MonoBehaviour
         
         EnemyController en = new_enemy.GetComponent<EnemyController>();
         
-        
-         
         
         // *** WE DO TOUCH THIS *** //
         
@@ -228,12 +230,37 @@ public class EnemySpawner : MonoBehaviour
 		}
 
         GameManager.Instance.AddEnemy(new_enemy);
-        yield return new WaitForSeconds(0.5f); // change this to work with the delay
+        //yield return new WaitForSeconds(0.5f); // change this to work with the delay
     }
 
-	IEnumerator SpawnEnemies() {
+	IEnumerator SpawnEnemies(Spawn s) {
 
         // "spawns all enemies of one type" - Markus Eger via Discord
-        return null;
+        int spawned = 0;
+        int spawn_total = RPNEvaluator.RPNEvaluator.Evaluate(s.count, dict);
+
+        // this is safe because Spawn uses default values for these member variables
+        List<int> sequence = s.sequence;
+        int delay = s.delay;
+
+        while (spawned < spawn_total) 
+        {
+
+            // *** WHAT TO ADD ***
+            // Claire can add the sequencing logic
+
+            // moving through the numbers in sequence and changing number to spawn etc
+
+            int numToSpawn = sequence[0]; // *** I put this to avoid a compilation error, change this to whatever it needs to be 
+
+            for (int i = 0; i < numToSpawn; i++)
+            {
+                SpawnEnemy(s); // used to be yield return
+            }
+
+            yield return new WaitForSeconds(delay); // the delay between spawns 
+        }
+
+        activeSpawns--;
 	}
 }
