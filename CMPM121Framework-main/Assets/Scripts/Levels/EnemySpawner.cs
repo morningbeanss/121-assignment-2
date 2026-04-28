@@ -8,6 +8,7 @@ using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
 using RPNEvaluator;
+using System.Globalization;
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class EnemySpawner : MonoBehaviour
     public SpawnPoint[] SpawnPoints;    
 
     private Level level;
+    private List<Level> levels; //list to hold all levels after reading them from json file
     private int wave = 0;
     private List<Enemy> enemies;
     private Dictionary<string, int> dict = new Dictionary<string, int>();
@@ -26,15 +28,40 @@ public class EnemySpawner : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        GameObject selector = Instantiate(button, level_selector.transform);
-        selector.transform.localPosition = new Vector3(0, 130);
-        selector.GetComponent<MenuSelectorController>().spawner = this;
-        selector.GetComponent<MenuSelectorController>().SetLevel("Start");
+        //start button below wuz part of the og code, commenting it out cuz i think it's unnecessary
+        //GameObject selector = Instantiate(button, level_selector.transform);
+        //selector.transform.localPosition = new Vector3(0, 130);
+        //selector.GetComponent<MenuSelectorController>().spawner = this;
+        //selector.GetComponent<MenuSelectorController>().SetLevel("Start");
+
+
+        //adding buttons
+        string level_json = Resources.Load<TextAsset>("levels").text; //read json file
+        levels = JsonConvert.DeserializeObject<List<Level>>(level_json);
+        int padding = 60; //space between each level button
+        int startLoc = 60; //first button loc
+        //list to hold all the button variables (so they can easily be set to inactive after level start)
+        List<Button> buttons = new List<Button>(); 
+        //instructions say buttons have to be "dynamically" spawned so foreach loop
+        //(if a new lvl is added to the json, this file shouldn't have to be edited for there to be a button for it)
+        foreach (Level l in levels)
+        {
+            //set up button
+            GameObject lvlButt = Instantiate(button, level_selector.transform);
+            lvlButt.transform.localPosition = new Vector3(0, startLoc);
+            lvlButt.GetComponent<MenuSelectorController>().spawner = this;
+            lvlButt.GetComponent<MenuSelectorController>().SetLevel(l.name);
+
+            //set up location for next button
+            startLoc -= padding;
+        }
+
         
         dict.Add("wave", wave);
 
         string enemies_json = Resources.Load<TextAsset>("enemies").text;
         enemies = JsonConvert.DeserializeObject<List<Enemy>>(enemies_json);
+        //Debug.Log("enemies: " + enemies);
     }
 
     // Update is called once per frame
@@ -127,6 +154,7 @@ public class EnemySpawner : MonoBehaviour
     {
         
         Enemy enemy_data = enemies.Find(e => e.name == spawn.name);
+        //Debug.Log("enemy data: " + enemy_data); 
 
         // parse spawn.location string
         SpawnPoint spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)]; 
