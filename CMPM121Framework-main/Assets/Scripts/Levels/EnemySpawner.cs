@@ -168,8 +168,12 @@ public class EnemySpawner : MonoBehaviour
 
         // parse spawn.location string
         SpawnPoint spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)]; 
-        string spawn_location = spawn.location.Split(' ')[1];
-        switch (spawn_location)
+        
+        string[] spawn_location = spawn.location.Split(' ');
+        
+        if (spawn_location.Length > 1)
+        {
+            switch (spawn_location[1])
         {
             case "red":
                 spawn_point.kind = SpawnPoint.SpawnName.RED;
@@ -183,6 +187,8 @@ public class EnemySpawner : MonoBehaviour
             default:
             break;
         }
+        }
+        
         // spawn_point.kind = SpawnName.RED/GREEN/BONE
         Vector2 offset = Random.insideUnitCircle * 1.8f;
 
@@ -190,8 +196,8 @@ public class EnemySpawner : MonoBehaviour
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
 
-        ////Debug.Log("enemy sprite#: " + enemy_data.sprite);
-        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(0); // flagged for error
+        Debug.Log("enemy sprite#: " + enemy_data.sprite);
+        new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(enemy_data.sprite); // out of bounds error?
         
         EnemyController en = new_enemy.GetComponent<EnemyController>();
         
