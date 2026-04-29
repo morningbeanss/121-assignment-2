@@ -66,7 +66,7 @@ public class EnemySpawner : MonoBehaviour
 
         string enemies_json = Resources.Load<TextAsset>("enemies").text;
         enemies = JsonConvert.DeserializeObject<List<Enemy>>(enemies_json);
-        ////Debug.Log("enemies: " + enemies);
+        //Debug.Log("enemies: " + enemies);
     }
 
     // Update is called once per frame
@@ -91,19 +91,21 @@ public class EnemySpawner : MonoBehaviour
                 level = l;
             }
         }
-        ////Debug.Log("Level: " + level);
+        //Debug.Log("Level: " + level);
         level_selector.gameObject.SetActive(false);
         // this is not nice: we should not have to be required to tell the player directly that the level is starting
         GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
 
         StartCoroutine(SpawnWave());
-        Debug.Log("Starting wave");
-       // wave++; // added by calvin
+        //Debug.Log("Starting wave");
+        wave++; // added by calvin
     }
 
     public void NextWave()
     {
-       // wave++;
+        wave++;
+        wave_end_stats.text = "";
+        Debug.Log("Next wave starting");
         StartCoroutine(SpawnWave());
     }
 
@@ -139,7 +141,7 @@ public class EnemySpawner : MonoBehaviour
             Without having written the real behavior, this currently
             Spawns one zombie, one skeleton, and one warlock
             */
-            Debug.Log("SPawning Enemies...\nEnemy type: " + s.enemy);
+            //Log("Spawning Enemies...\nEnemy type: " + s.enemy);
             StartCoroutine(SpawnEnemies(s)); // make more specific later
             
         }
@@ -148,10 +150,10 @@ public class EnemySpawner : MonoBehaviour
         // *** WAVE CHANGE LOGIC *** //
         // Track the number of spawn coroutines,
         // so it will be yield return new WaitUntil(() => activeSpawns == 0 && GameManager.Instance.enemy_count == 0);
-        yield return new WaitWhile(() => activeSpawns > 0 && GameManager.Instance.enemy_count > 0); 
+        yield return new WaitUntil(() => activeSpawns <= 0 && GameManager.Instance.enemy_count <= 0); 
 
         GameManager.Instance.state = GameManager.GameState.WAVEEND;
-        Debug.Log("WAVE OVER");
+        //Debug.Log("WAVE OVER");
         if (level.name == "Endless" || wave < level.waves)
         {
             //make a button pop up to trigger next wave starting
@@ -160,7 +162,7 @@ public class EnemySpawner : MonoBehaviour
             waveButt.GetComponent<MenuSelectorController>().SetLevel("Next Wave");
 
             //make texts to pop up & inform player what's up
-            int wavesDone = wave - 1; //might not need the - 1
+            int wavesDone = wave;
             int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
             int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
             wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
@@ -260,8 +262,19 @@ public class EnemySpawner : MonoBehaviour
 
         // this is safe because Spawn uses default values for these member variables
         List<int> sequence = s.sequence;
+        sequence ??= new List<int>() { 1 };
         int delay = s.delay;
+        //Debug.Log("Spawn total is " + spawn_total);
 
+        //[1,2,3]
+        int sequenceIndex = 0;
+        string seq = "[";
+        foreach (int a in sequence)
+        {
+            seq += a + " ";
+        }
+        seq += "]";
+        Debug.Log("Sequence = " + seq);
         while (spawned < spawn_total) 
         {
 
@@ -271,10 +284,12 @@ public class EnemySpawner : MonoBehaviour
             // moving through the numbers in sequence and changing number to spawn etc
 
             //int numToSpawn = sequence[0]; // *** I put this to avoid a compilation error, change this to whatever it needs to be 
-            int sequenceIndex = 0;
+            
 
             for (int i = 0; i < sequence[sequenceIndex]; i++)
             {
+                //Debug.Log("Spawning " + sequence[sequenceIndex] + " many enemies");
+                //Debug.Log("Enemy type: " + s.enemy);
                 if (spawned < spawn_total)
                 {
                     SpawnEnemy(s); // used to be yield return
@@ -283,10 +298,18 @@ public class EnemySpawner : MonoBehaviour
             }
 
             sequenceIndex++;
-            yield return new WaitForSeconds(delay); // the delay between spawns 
+            if (sequenceIndex >= sequence.Count)
+            {
+                sequenceIndex = 0;
+            }
+            if (spawned < spawn_total)
+            {
+                yield return new WaitForSeconds(delay); // the delay between spawns 
+            }
+            
         }
-        Debug.Log("Finished Spawning " + s.enemy + " wave" +
-            "\nSpawn total = " + spawn_total);
+        //Debug.Log("Finished Spawning " + s.enemy + " wave" +
+        //    "\nSpawn total = " + spawn_total);
         activeSpawns--;
 	}
 }

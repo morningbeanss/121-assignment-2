@@ -27,6 +27,18 @@ public class MenuSelectorController : MonoBehaviour
 
     public void StartLevel()
     {
-        spawner.StartLevel(level);
+        switch (GameManager.Instance.state)
+        {
+            case GameManager.GameState.PREGAME:
+                spawner.StartLevel(level);
+            break;
+            case GameManager.GameState.WAVEEND:
+                spawner.NextWave();
+            break;
+            case GameManager.GameState.GAMEOVER:
+            break;
+        }
+        
+
     }
 }

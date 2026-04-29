@@ -9,6 +9,6 @@ public class Spawn
 	public string damage;	//  RPN Value or BASE
 	public string speed;	//  RPN Value or BASE
     public int delay = 2; // default value
-    public List<int> sequence = new List<int>() {1}; // default value
+    public List<int> sequence = null;
     public string location;
 }
