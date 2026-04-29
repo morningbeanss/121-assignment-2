@@ -145,7 +145,9 @@ public class EnemySpawner : MonoBehaviour
         PlayerController playerController = GameManager.Instance.player.GetComponent<PlayerController>();
         if (playerController != null)
         {
-            playerController.hp.hp = playerController.hp.max_hp;
+            playerController.hp = new Hittable(100, Hittable.Team.PLAYER, GameManager.Instance.player);
+            playerController.hp.OnDeath += playerController.Die;
+            playerController.healthui.SetHealth(playerController.hp);
             GameManager.Instance.player.transform.position = Vector3.zero; //put back to middle
             Unit playerUnit = GameManager.Instance.player.GetComponent<Unit>();
             if (playerUnit != null)
@@ -210,7 +212,15 @@ public class EnemySpawner : MonoBehaviour
    
         yield return new WaitUntil(() => (activeSpawns <= 0 && GameManager.Instance.enemy_count <= 0) || GameManager.Instance.player.GetComponent<PlayerController>().hp.hp <= 0); 
 
-        
+        if (GameManager.Instance.player.GetComponent<PlayerController>().hp.hp <= 0)
+        {
+            //if player dies, instantly wipe enemies, end yield, send to gameover
+            GameManager.Instance.KillAllRemainingEnemies();
+            GameManager.Instance.state = GameManager.GameState.GAMEOVER;
+            GameWaveOver();
+            Debug.Log("GAMEOVER by DEATH trIgGerRed");
+            yield break;
+        }
         if (level.name == "Endless" || wave < level.waves)
         {
             GameManager.Instance.state = GameManager.GameState.WAVEEND;
@@ -247,6 +257,13 @@ public class EnemySpawner : MonoBehaviour
             playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
             wavesDone = wave;
             enemiesKilled = GameManager.Instance.total_enemies_killed;
+
+            //make a restart button
+            
+            GameObject restartButt = Instantiate(button, level_selector.transform);
+            restartButt.transform.localPosition = new Vector3(0, 0);
+            restartButt.GetComponent<MenuSelectorController>().SetLevel("Play Again"); //in menuSelectorController, if in GAMEOVER, button should trigger restart
+
             if (playerHealth <= 0) //GAMEOVER by death case (as opposed to finishing the waves)
             {
                 Debug.Log("GAMEOVER due to DEATH");
@@ -260,12 +277,6 @@ public class EnemySpawner : MonoBehaviour
                 //display winner text
                 wave_end_stats.text = $"You Won!\nWaves Completed: {wavesDone}\nFinal Health: {playerHealth} / {maxHealth}\nEnemies Killed: {enemiesKilled}";
             }
-            //Debug.Log("GAMEOVER");
-
-            //make a restart button
-            GameObject restartButt = Instantiate(button, level_selector.transform);
-            restartButt.transform.localPosition = new Vector3(0, 0);
-            restartButt.GetComponent<MenuSelectorController>().SetLevel("Play Again"); //in menuSelectorController, if in GAMEOVER, button should trigger restart
 
             //GameManager.Instance.state = GameManager.GameState.PREGAME; //i dont think this is needed here bc i think resetGame deals w this?
         }
