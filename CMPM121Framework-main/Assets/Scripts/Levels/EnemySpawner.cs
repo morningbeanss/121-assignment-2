@@ -20,7 +20,7 @@ public class EnemySpawner : MonoBehaviour
 
     private Level level;
     private List<Level> levels; //list to hold all levels after reading them from json file
-    private int wave = 0;
+    private int wave;
     private List<Enemy> enemies;
     private Dictionary<string, int> dict = new Dictionary<string, int>();
 
@@ -29,6 +29,7 @@ public class EnemySpawner : MonoBehaviour
     public TextMeshProUGUI wave_end_stats;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Start()
     {
         //start button below wuz part of the og code, commenting it out cuz i think it's unnecessary
@@ -37,6 +38,9 @@ public class EnemySpawner : MonoBehaviour
         //selector.GetComponent<MenuSelectorController>().spawner = this;
         //selector.GetComponent<MenuSelectorController>().SetLevel("Start");
 
+        
+
+        wave = 0;
 
         //adding buttons
         string level_json = Resources.Load<TextAsset>("levels").text; //read json file
@@ -62,7 +66,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         
-        dict.Add("wave", wave);
+        dict["wave"] = wave;
 
         string enemies_json = Resources.Load<TextAsset>("enemies").text;
         enemies = JsonConvert.DeserializeObject<List<Enemy>>(enemies_json);
@@ -89,6 +93,7 @@ public class EnemySpawner : MonoBehaviour
             if (l.name == levelname)
             {
                 level = l;
+            //    Debug.Log("Waves: " + level.waves);
             }
         }
         //Debug.Log("Level: " + level);
@@ -105,7 +110,7 @@ public class EnemySpawner : MonoBehaviour
     {
         wave++;
         wave_end_stats.text = "";
-        Debug.Log("Next wave starting");
+      //  Debug.Log("Next wave starting");
         StartCoroutine(SpawnWave());
     }
 
@@ -152,9 +157,21 @@ public class EnemySpawner : MonoBehaviour
         // so it will be yield return new WaitUntil(() => activeSpawns == 0 && GameManager.Instance.enemy_count == 0);
         yield return new WaitUntil(() => activeSpawns <= 0 && GameManager.Instance.enemy_count <= 0); 
 
-        GameManager.Instance.state = GameManager.GameState.WAVEEND;
-        //Debug.Log("WAVE OVER");
+        
         if (level.name == "Endless" || wave < level.waves)
+        {
+            
+            GameManager.Instance.state = GameManager.GameState.WAVEEND;
+            Debug.Log("WAVEEND");
+        }
+        else
+        {
+            GameManager.Instance.state = GameManager.GameState.GAMEOVER;
+            
+        }
+
+        //Debug.Log("WAVE OVER");
+        if (GameManager.Instance.state == GameManager.GameState.WAVEEND)
         {
             //make a button pop up to trigger next wave starting
             GameObject waveButt = Instantiate(button, level_selector.transform);
@@ -162,15 +179,30 @@ public class EnemySpawner : MonoBehaviour
             waveButt.GetComponent<MenuSelectorController>().SetLevel("Next Wave");
 
             //make texts to pop up & inform player what's up
+
+            /*
+
+            Maybe add somemthing like # of enemies killed, # of shots hit vs missed, etc...
+
+
+            */
             int wavesDone = wave;
             int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
             int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
             wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
         }
-        else
+        else if (GameManager.Instance.state == GameManager.GameState.GAMEOVER)
         {
-            // restart
-            GameManager.Instance.state = GameManager.GameState.GAMEOVER; // maybe remove this?
+            Debug.Log("GAMEOVER");
+            GameManager.Instance.state = GameManager.GameState.PREGAME;
+
+            // this doesn't work
+            Start();
+
+            //int wavesDone = wave;
+            //int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
+            //int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
+            //wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
         }
     }
 
@@ -274,7 +306,7 @@ public class EnemySpawner : MonoBehaviour
             seq += a + " ";
         }
         seq += "]";
-        Debug.Log("Sequence = " + seq);
+        //Debug.Log("Sequence = " + seq);
         while (spawned < spawn_total) 
         {
 
