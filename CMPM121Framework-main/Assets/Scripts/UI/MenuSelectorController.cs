@@ -36,7 +36,7 @@ public class MenuSelectorController : MonoBehaviour
                 spawner.NextWave();
             break;
             case GameManager.GameState.GAMEOVER:
-                
+                spawner.RestartGame();
             break;
         }
         

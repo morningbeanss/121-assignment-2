@@ -25,10 +25,13 @@ public class EnemySpawner : MonoBehaviour
     private Dictionary<string, int> dict = new Dictionary<string, int>();
 
     int activeSpawns;
-    int wavesDone; //this n the one below used in SpawnWave
+    int wavesDone; //this n ones below used in SpawnWave as post-wave/post-game stats
     int playerHealth;
+    int enemiesKilled;
 
-    public TextMeshProUGUI wave_end_stats;
+    public TextMeshProUGUI wave_end_stats; //wave/endgame text stats
+
+    public Button restartButton; //button for restarting the game after loss/win
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
@@ -73,6 +76,12 @@ public class EnemySpawner : MonoBehaviour
         string enemies_json = Resources.Load<TextAsset>("enemies").text;
         enemies = JsonConvert.DeserializeObject<List<Enemy>>(enemies_json);
         //Debug.Log("enemies: " + enemies);
+
+        //setting up a listener for the restartButton
+        if (restartButton != null)
+        {
+            restartButton.onClick.AddListener(RestartGame); //if clicked, trigger RestartGame to run
+        }
     }
 
     // Update is called once per frame
@@ -120,7 +129,38 @@ public class EnemySpawner : MonoBehaviour
     //like resetting all variables and getting level selector buttons to show up again
     public void RestartGame()
     {
+        wave_end_stats.text = ""; //make sure its clear
+        //reset all counters
+        wave = 0;
+        wavesDone = 0;
+        activeSpawns = 0;
+        enemiesKilled = 0;
 
+        GameManager.Instance.Reset(); //function i wrote in game manager that resets some variables over there
+
+        //reset player
+        PlayerController playerController = GameManager.Instance.player.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.hp.hp = playerController.hp.max_hp;
+            GameManager.Instance.player.transform.position = Vector3.zero; //put back to middle
+            Unit playerUnit = GameManager.Instance.player.GetComponent<Unit>();
+            if (playerUnit != null)
+            {
+                playerUnit.movement = Vector2.zero;
+            }
+        }
+
+        //destroy original buttons, they will be reset when start() is re-called
+        foreach (Transform button in level_selector.transform)
+        {
+            Destroy(button.gameObject);
+        }
+
+        Start(); //calling this shuld hopefully just make everything reset ok
+
+        GameManager.Instance.state = GameManager.GameState.PREGAME; //reset game state
+        level_selector.gameObject.SetActive(true); //set active so u can see the buttons
     }
 
 
@@ -176,9 +216,10 @@ public class EnemySpawner : MonoBehaviour
         else
         {
             GameManager.Instance.state = GameManager.GameState.GAMEOVER;
-            
+            Debug.Log("GAMEOVER triggered");
         }
 
+        int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
         //Debug.Log("WAVE OVER");
         if (GameManager.Instance.state == GameManager.GameState.WAVEEND)
         {
@@ -187,49 +228,48 @@ public class EnemySpawner : MonoBehaviour
             waveButt.transform.localPosition = new Vector3(0, 0);
             waveButt.GetComponent<MenuSelectorController>().SetLevel("Next Wave");
 
-            //make texts to pop up & inform player what's up
-
-            /*
-
-            Maybe add somemthing like # of enemies killed, # of shots hit vs missed, etc...
-
-
-            */
             wavesDone = wave;
             playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
-            int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
-            wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
+            enemiesKilled = GameManager.Instance.total_enemies_killed;
+            wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}\nEnemies Killed: {enemiesKilled}";
         }
         else if (GameManager.Instance.state == GameManager.GameState.GAMEOVER)
         {
             //make sure variables are updated
             playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
             wavesDone = wave;
+            enemiesKilled = GameManager.Instance.total_enemies_killed;
             if (playerHealth <= 0) //GAMEOVER by death case (as opposed to finishing the waves)
             {
+                Debug.Log("GAMEOVER due to DEATH");
                 //display loser text
-                wave_end_stats.text = $"You Died!\nWaves Completed: {wavesDone}";
+                wave_end_stats.text = $"You Died!\nWaves Completed: {wavesDone}\nEnemies Killed: {enemiesKilled}";
+                //kill off remaining enemies
+                GameManager.Instance.KillAllRemainingEnemies();
             }
             else //only other reason game would be over is if they won
             {
                 //display winner text
-                wave_end_stats.text = $"You Won!\nWaves Completed: {wavesDone}";
+                wave_end_stats.text = $"You Won!\nWaves Completed: {wavesDone}\nFinal Health: {playerHealth} / {maxHealth}\nEnemies Killed: {enemiesKilled}";
             }
-            Debug.Log("GAMEOVER");
-            GameManager.Instance.state = GameManager.GameState.PREGAME;
+            //Debug.Log("GAMEOVER");
 
-            // this doesn't work
-            Start();
+            //make a restart button
+            GameObject restartButt = Instantiate(button, level_selector.transform);
+            restartButt.transform.localPosition = new Vector3(0, 0);
+            restartButt.GetComponent<MenuSelectorController>().SetLevel("Play Again"); //in menuSelectorController, if in GAMEOVER, button should trigger restart
 
-            //int wavesDone = wave;
-            //int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
-            //int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
-            //wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
+            //GameManager.Instance.state = GameManager.GameState.PREGAME; //i dont think this is needed here bc i think resetGame deals w this?
         }
         if (GameManager.Instance.state != GameManager.GameState.GAMEOVER && GameManager.Instance.state != GameManager.GameState.WAVEEND)
         {
             wave_end_stats.text = ""; //wanna make sure this doesn't show up any other time
         }
+    }
+
+    void GameWaveOver() //adding this as a separate function so it can be called as needed; stuff was spawnWave() b4
+    {
+
     }
 
     void SpawnEnemy(Spawn spawn) // changed from SpawnZombie()

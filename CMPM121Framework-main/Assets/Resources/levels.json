@@ -101,19 +101,5 @@
             "location": "random"
           }
        ]
-   },
-   {
-        "name": "Testing",
-        "waves": 1,
-        "spawns": [
-            {
-                "enemy": "zombie",
-                "count": "1",
-                "hp": "base 5 wave * +",
-                "delay": "5",
-                "sequence": [1,2,3],
-                "location": "random"
-            }
-        ]
    }
 ]
