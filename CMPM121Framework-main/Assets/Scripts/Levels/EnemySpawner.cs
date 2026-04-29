@@ -87,7 +87,10 @@ public class EnemySpawner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (GameManager.Instance.state != GameManager.GameState.GAMEOVER && GameManager.Instance.state != GameManager.GameState.WAVEEND)
+        {
+            wave_end_stats.text = ""; //wanna make sure this doesn't show up any other time
+        }
     }
 
     public void StartLevel(string levelname)
@@ -204,21 +207,26 @@ public class EnemySpawner : MonoBehaviour
         // *** WAVE CHANGE LOGIC *** //
         // Track the number of spawn coroutines,
         // so it will be yield return new WaitUntil(() => activeSpawns == 0 && GameManager.Instance.enemy_count == 0);
-        yield return new WaitUntil(() => activeSpawns <= 0 && GameManager.Instance.enemy_count <= 0); 
+   
+        yield return new WaitUntil(() => (activeSpawns <= 0 && GameManager.Instance.enemy_count <= 0) || GameManager.Instance.player.GetComponent<PlayerController>().hp.hp <= 0); 
 
         
         if (level.name == "Endless" || wave < level.waves)
         {
-            
             GameManager.Instance.state = GameManager.GameState.WAVEEND;
+            GameWaveOver();
             Debug.Log("WAVEEND");
         }
         else
         {
             GameManager.Instance.state = GameManager.GameState.GAMEOVER;
+            GameWaveOver();
             Debug.Log("GAMEOVER triggered");
         }
+    }
 
+    void GameWaveOver() //adding this as a separate function so it can be called as needed; stuff was spawnWave() b4
+    {
         int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
         //Debug.Log("WAVE OVER");
         if (GameManager.Instance.state == GameManager.GameState.WAVEEND)
@@ -243,7 +251,7 @@ public class EnemySpawner : MonoBehaviour
             {
                 Debug.Log("GAMEOVER due to DEATH");
                 //display loser text
-                wave_end_stats.text = $"You Died!\nWaves Completed: {wavesDone}\nEnemies Killed: {enemiesKilled}";
+                wave_end_stats.text = $"You Died!\nWaves Completed: {wavesDone - 1}\nEnemies Killed: {enemiesKilled}";
                 //kill off remaining enemies
                 GameManager.Instance.KillAllRemainingEnemies();
             }
@@ -261,15 +269,6 @@ public class EnemySpawner : MonoBehaviour
 
             //GameManager.Instance.state = GameManager.GameState.PREGAME; //i dont think this is needed here bc i think resetGame deals w this?
         }
-        if (GameManager.Instance.state != GameManager.GameState.GAMEOVER && GameManager.Instance.state != GameManager.GameState.WAVEEND)
-        {
-            wave_end_stats.text = ""; //wanna make sure this doesn't show up any other time
-        }
-    }
-
-    void GameWaveOver() //adding this as a separate function so it can be called as needed; stuff was spawnWave() b4
-    {
-
     }
 
     void SpawnEnemy(Spawn spawn) // changed from SpawnZombie()
