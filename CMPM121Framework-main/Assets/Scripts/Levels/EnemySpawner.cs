@@ -9,6 +9,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using RPNEvaluator;
 using System.Globalization;
+using TMPro;
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -24,6 +25,8 @@ public class EnemySpawner : MonoBehaviour
     private Dictionary<string, int> dict = new Dictionary<string, int>();
 
     int activeSpawns;
+
+    public TextMeshProUGUI wave_end_stats;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -63,7 +66,7 @@ public class EnemySpawner : MonoBehaviour
 
         string enemies_json = Resources.Load<TextAsset>("enemies").text;
         enemies = JsonConvert.DeserializeObject<List<Enemy>>(enemies_json);
-        //Debug.Log("enemies: " + enemies);
+        ////Debug.Log("enemies: " + enemies);
     }
 
     // Update is called once per frame
@@ -88,17 +91,19 @@ public class EnemySpawner : MonoBehaviour
                 level = l;
             }
         }
-        //Debug.Log("Level: " + level);
+        ////Debug.Log("Level: " + level);
         level_selector.gameObject.SetActive(false);
         // this is not nice: we should not have to be required to tell the player directly that the level is starting
         GameManager.Instance.player.GetComponent<PlayerController>().StartLevel();
+
         StartCoroutine(SpawnWave());
-        wave++; // added by calvin
+        Debug.Log("Starting wave");
+       // wave++; // added by calvin
     }
 
     public void NextWave()
     {
-        wave++;
+       // wave++;
         StartCoroutine(SpawnWave());
     }
 
@@ -128,29 +133,37 @@ public class EnemySpawner : MonoBehaviour
 
         foreach (Spawn s in level.spawns)
         {
-            Debug.Log("Spawn name: " + s.enemy +
-            "\nSpawn count");
+            //Debug.Log("Spawn name: " + s.enemy +
+            //"\nSpawn count");
             /*
             Without having written the real behavior, this currently
             Spawns one zombie, one skeleton, and one warlock
             */
+            Debug.Log("SPawning Enemies...\nEnemy type: " + s.enemy);
             StartCoroutine(SpawnEnemies(s)); // make more specific later
+            
         }
 
 
         // *** WAVE CHANGE LOGIC *** //
         // Track the number of spawn coroutines,
         // so it will be yield return new WaitUntil(() => activeSpawns == 0 && GameManager.Instance.enemy_count == 0);
-        yield return new WaitWhile(() => GameManager.Instance.enemy_count > 0); 
+        yield return new WaitWhile(() => activeSpawns > 0 && GameManager.Instance.enemy_count > 0); 
 
         GameManager.Instance.state = GameManager.GameState.WAVEEND;
-        if (level.name == "Endless")
+        Debug.Log("WAVE OVER");
+        if (level.name == "Endless" || wave < level.waves)
         {
-            NextWave();
-        }
-        else if (wave < level.waves)
-        {
-            NextWave();
+            //make a button pop up to trigger next wave starting
+            GameObject waveButt = Instantiate(button, level_selector.transform);
+            waveButt.transform.localPosition = new Vector3(0, 0);
+            waveButt.GetComponent<MenuSelectorController>().SetLevel("Next Wave");
+
+            //make texts to pop up & inform player what's up
+            int wavesDone = wave - 1; //might not need the - 1
+            int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
+            int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
+            wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
         }
         else
         {
@@ -164,7 +177,7 @@ public class EnemySpawner : MonoBehaviour
         
         Enemy enemy_data = enemies.Find(e => e.name == spawn.enemy); // this should probably work now
         
-        //Debug.Log("enemy data: " + enemy_data); 
+        ////Debug.Log("enemy data: " + enemy_data); 
 
         // parse spawn.location string
         SpawnPoint spawn_point = SpawnPoints[Random.Range(0, SpawnPoints.Length)]; 
@@ -196,7 +209,7 @@ public class EnemySpawner : MonoBehaviour
         Vector3 initial_position = spawn_point.transform.position + new Vector3(offset.x, offset.y, 0);
         GameObject new_enemy = Instantiate(enemy, initial_position, Quaternion.identity);
 
-        Debug.Log("enemy sprite#: " + enemy_data.sprite);
+        //Debug.Log("enemy sprite#: " + enemy_data.sprite);
         new_enemy.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.enemySpriteManager.Get(enemy_data.sprite); // out of bounds error?
         
         EnemyController en = new_enemy.GetComponent<EnemyController>();
@@ -265,13 +278,15 @@ public class EnemySpawner : MonoBehaviour
                 if (spawned < spawn_total)
                 {
                     SpawnEnemy(s); // used to be yield return
+                    spawned++;
                 }
             }
 
             sequenceIndex++;
             yield return new WaitForSeconds(delay); // the delay between spawns 
         }
-
+        Debug.Log("Finished Spawning " + s.enemy + " wave" +
+            "\nSpawn total = " + spawn_total);
         activeSpawns--;
 	}
 }
