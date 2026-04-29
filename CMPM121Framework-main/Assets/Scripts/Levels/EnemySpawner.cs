@@ -257,13 +257,18 @@ public class EnemySpawner : MonoBehaviour
 
             // moving through the numbers in sequence and changing number to spawn etc
 
-            int numToSpawn = sequence[0]; // *** I put this to avoid a compilation error, change this to whatever it needs to be 
+            //int numToSpawn = sequence[0]; // *** I put this to avoid a compilation error, change this to whatever it needs to be 
+            int sequenceIndex = 0;
 
-            for (int i = 0; i < numToSpawn; i++)
+            for (int i = 0; i < sequence[sequenceIndex]; i++)
             {
-                SpawnEnemy(s); // used to be yield return
+                if (spawned < spawn_total)
+                {
+                    SpawnEnemy(s); // used to be yield return
+                }
             }
 
+            sequenceIndex++;
             yield return new WaitForSeconds(delay); // the delay between spawns 
         }
 
