@@ -25,6 +25,8 @@ public class EnemySpawner : MonoBehaviour
     private Dictionary<string, int> dict = new Dictionary<string, int>();
 
     int activeSpawns;
+    int wavesDone; //this n the one below used in SpawnWave
+    int playerHealth;
 
     public TextMeshProUGUI wave_end_stats;
 
@@ -114,6 +116,13 @@ public class EnemySpawner : MonoBehaviour
         StartCoroutine(SpawnWave());
     }
 
+    //i (clr) wrote this helper function to restart the game,
+    //like resetting all variables and getting level selector buttons to show up again
+    public void RestartGame()
+    {
+
+    }
+
 
     IEnumerator SpawnWave()
     {
@@ -186,13 +195,26 @@ public class EnemySpawner : MonoBehaviour
 
 
             */
-            int wavesDone = wave;
-            int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
+            wavesDone = wave;
+            playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
             int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
             wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
         }
         else if (GameManager.Instance.state == GameManager.GameState.GAMEOVER)
         {
+            //make sure variables are updated
+            playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
+            wavesDone = wave;
+            if (playerHealth <= 0) //GAMEOVER by death case (as opposed to finishing the waves)
+            {
+                //display loser text
+                wave_end_stats.text = $"You Died!\nWaves Completed: {wavesDone}";
+            }
+            else //only other reason game would be over is if they won
+            {
+                //display winner text
+                wave_end_stats.text = $"You Won!\nWaves Completed: {wavesDone}";
+            }
             Debug.Log("GAMEOVER");
             GameManager.Instance.state = GameManager.GameState.PREGAME;
 
@@ -203,6 +225,10 @@ public class EnemySpawner : MonoBehaviour
             //int playerHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.hp;
             //int maxHealth = GameManager.Instance.player.GetComponent<PlayerController>().hp.max_hp;
             //wave_end_stats.text = $"Waves Completed: {wavesDone}\nHealth: {playerHealth} / {maxHealth}";
+        }
+        if (GameManager.Instance.state != GameManager.GameState.GAMEOVER && GameManager.Instance.state != GameManager.GameState.WAVEEND)
+        {
+            wave_end_stats.text = ""; //wanna make sure this doesn't show up any other time
         }
     }
 

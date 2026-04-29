@@ -64,6 +64,7 @@ public class PlayerController : MonoBehaviour
     void Die()
     {
         Debug.Log("You Lost");
+        GameManager.Instance.state = GameManager.GameState.GAMEOVER; //set the state so game knows its over
     }
 
 }

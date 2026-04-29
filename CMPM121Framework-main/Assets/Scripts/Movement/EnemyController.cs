@@ -42,7 +42,7 @@ public class EnemyController : MonoBehaviour
     }
 
 
-    void Die()
+    public void Die() //made it public so i can call n use it in GameManager.cs
     {
         if (!dead)
         {
