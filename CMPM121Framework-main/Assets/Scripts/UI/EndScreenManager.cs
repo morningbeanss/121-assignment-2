@@ -5,27 +5,27 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Rendering;
 
-public class RewardScreenManager : MonoBehaviour
+public class EndScreenManager : MonoBehaviour
 {
-    public GameObject rewardUI;
-
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+    
+    public GameObject endScreen;
+    
     void Start()
     {
-  
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (GameManager.Instance.state == GameManager.GameState.WAVEEND)
+        if (GameManager.Instance.state == GameManager.GameState.GAMEOVER)
         {
-            rewardUI.SetActive(true);
+            endScreen.SetActive(true);
         }
         else
         {
-            rewardUI.SetActive(false);
+            endScreen.SetActive(false);
         }
-        
     }
 }
