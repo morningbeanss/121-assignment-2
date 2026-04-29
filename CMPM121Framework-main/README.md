@@ -22,7 +22,10 @@ https://opengameart.org/content/tiny-creatures
 Arcane bolt projectile:
 https://opengameart.org/content/arcane-magic-effect
 
+
 ----------------------------------------------------------------------------------------------------------------------------
+
+
 # CMPM 121 Assignment 2 README - Calvin Richards and Claire Buck
 
 ## Overview of the objective of assignments 2-4 (taken from the assignment page)
@@ -73,6 +76,3 @@ When the player dies or beats all the waves (unless in endless), restart the gam
 We must define AT LEAST one new enemy type. 
 
 I have created submission.json (no commit yet), I have not yet created report.pdf
-
-**Edit:
-Doing a small change to this readme to test edit from a different device
